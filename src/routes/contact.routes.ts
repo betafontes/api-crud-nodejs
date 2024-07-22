@@ -8,7 +8,10 @@ export async function contactsRoutes(fastify: FastifyInstance) {
   fastify.addHook("preHandler", authMiddleware)
   fastify.post<{ Body: ContactCreate }>("/", async (req, reply) => {
     const { name, email, phone } = req.body
-    const emailUser = req.headers["email"]
+    const emailUserHeader = req.headers["email"]
+    const emailUser = Array.isArray(emailUserHeader)
+      ? emailUserHeader[0]
+      : emailUserHeader || ""
 
     try {
       const data = await contactUseCase.create({
@@ -24,7 +27,10 @@ export async function contactsRoutes(fastify: FastifyInstance) {
   })
 
   fastify.get("/", async (req, reply) => {
-    const emailUser = req.headers["email"]
+    const emailUserHeader = req.headers["email"]
+    const emailUser = Array.isArray(emailUserHeader)
+      ? emailUserHeader[0]
+      : emailUserHeader || ""
     try {
       const data = await contactUseCase.listAllContacts(emailUser)
       return reply.send(data)
@@ -32,6 +38,7 @@ export async function contactsRoutes(fastify: FastifyInstance) {
       reply.send(error)
     }
   })
+
   fastify.put<{ Body: Contact; Params: { id: string } }>(
     "/:id",
     async (req, reply) => {
